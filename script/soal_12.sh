@@ -82,7 +82,7 @@ server {
 
 # Server block ini hanya akan merespon request ke domain 'celeborn.K33.com'
 server {
-    # Mendengarkan di port 8004 
+    # Mendengarkan di port 8005
     listen 8005;
 
     server_name celeborn.K33.com;
@@ -119,7 +119,7 @@ server {
 
 # Server block ini hanya akan merespon request ke domain 'oropher.K33.com'
 server {
-    # Mendengarkan di port 8004 
+    # Mendengarkan di port 8006
     listen 8006;
 
     server_name oropher.K33.com;

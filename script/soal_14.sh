@@ -7,7 +7,7 @@ htpasswd -cb /etc/nginx/.htpasswd noldor silvan
 # Modifikasi Konfigurasi Nginx di galadriel
 nano /etc/nginx/sites-available/default
 
-# TAMBAHKAN DUA BARIS INI di server req ke domain tambah langsung di root
+# TAMBAHKAN DUA BARIS INI di server req ke domain sebelum location 404
 auth_basic "Area Terlarang Noldor & Silvan";
 auth_basic_user_file /etc/nginx/.htpasswd;
 

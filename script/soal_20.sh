@@ -11,10 +11,8 @@ nano /etc/nginx/sites-available/default
 #Di dalam blok location / { ... }, tambahkan beberapa baris proxy_cache
 # Terapkan zona cache 'php_cache'
 proxy_cache php_cache;
-
 #Tentukan apa yang di-cache (kode 200) dan berapa lama
-proxy_cache_valid 200 1m; # Cache halaman 200 (OK) selama 1 menit
-
+proxy_cache_valid 200 1m; 
 # KUNCI UNTUK VERIFIKASI:
 # Tambahkan header kustom untuk melihat status HIT/MISS
 add_header X-Proxy-Cache $upstream_cache_status;

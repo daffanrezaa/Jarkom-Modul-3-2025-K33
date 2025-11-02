@@ -28,7 +28,6 @@ location ~ \.php$ {
     # Baris ini mengambil header 'X-Real-IP' dari request
     # (variabel: $http_x_real_ip) dan meneruskannya ke PHP
     fastcgi_param X-Real-IP $http_x_real_ip;
-    # -----------------------------------
 }
 
 # restart nginx
