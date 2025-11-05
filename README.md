@@ -323,10 +323,92 @@ Raja Númenor terakhir yang ambisius, Pharazon, mencoba mengawasi taman-taman Pe
 
 Tujuan soal: mengatur Pharazon sebagai reverse proxy (load balancer) untuk ketiga worker PHP (Galadriel, Celeborn, Oropher) . Konfigurasi ini juga harus bisa meneruskan informasi Basic Authentication dari client ke worker.
 
+Pertama kita masuk ke Pharazon dan melakukan instalasi
+```bash
+apt update && apt install nginx -y
+```
+
+Selanjutnya kita masuk ke nano /etc/nginx/sites-available/default dan ganti semuanya dengan kode di bawah ini
+```bash
+# Membuat upstream "Kesatria_Lorien" 
+# Berisi IP dan Port unik dari setiap worker
+cat << 'EOF' > /etc/nginx/sites-available/default
+upstream Kesatria_Lorien {
+    server 10.80.2.2:8004;
+    server 10.80.2.3:8005;
+    server 10.80.2.4:8006;
+}
+
+server {
+    listen 80;
+    server_name pharazon.K33.com;
+
+    location / {
+        proxy_pass http://Kesatria_Lorien;
+
+        # Meneruskan header Basic Auth ke worker 
+        proxy_set_header Authorization $http_authorization;
+        proxy_pass_request_headers on;
+
+        # Mengatur header IP Asli 
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+EOF
+```
+
+Selanjutnya jangan lupa untuk menambahkan `Kesatria_Lorien` di servername masing masing worker dan setelah itu lakukan restart pada masing masing worker
+
+Restart pharazon
+```bash
+#restart nginx
+nginx -t
+service nginx restart
+```
+ Selanjutnya kita bisa melakukan test menggunakan klien 
+ ```bash
+curl --user "noldor:silvan" http://pharazon.K33.com
+```
+
+Hasil setelah test
+![kesatrialorien](assets/16_ksatrialorian.png)
+
 ### Soal 17
 Dari node client, lakukan benchmark ke pharazon.<xxxx>.com, jangan lupa menyertakan kredensial autentikasi. Amati distribusi beban ke para worker. Kemudian, simulasikan salah satu taman Peri runtuh (misal: service nginx stop di Galadriel) dan jalankan lagi benchmark. Apakah Pharazon masih bisa mengarahkan pengunjung ke taman yang tersisa? Periksa log Pharazon.
 
 Tujuan soal: menguji ketahanan Pharazon. Kita harus melakukan benchmark saat semua worker hidup, kemudian mematikan salah satu worker (Galadriel), dan membuktikan (melalui log dan tes ulang) bahwa Pharazon masih bisa mengarahkan lalu lintas ke worker yang tersisa dan kita lakukan pengecekan di log pharazon.
+
+Masuk ke klien (misal Miriel atau Celebrimbor) dan jalankan perintah ab
+```bash
+ab -n 100 -c 10 -A noldor:silvan http://pharazon.K33.com/
+```
+
+Setelah itu kita langsung pantau beban di worker, buka tiga koneksi terminal SSH baru, satu untuk Galadriel, Celeborn, dan Oropher. Di setiap terminal worker tersebut, jalankan `htop` dan pantau beban (CPU/Memori) setiap worker. Jika hasil naik secara merata maka ini membuktikan load balancing Round Robin berfungsi. 
+
+Selanjutnya kita akan mecoba tes kegagalan dan tes failover dengan mematikan nginx di galadriel
+```bash
+service nginx stop
+```
+
+Setelah mematikan jalankan ulang perintah ab di klien
+```bash
+ab -n 100 -c 10 -A noldor:silvan http://pharazon.K33.com/
+```
+
+Kemudian kita bisa masuk ke pharazon dan mengecek log pharazon untuk melihat error yang ada untuk bukti
+```bash
+cat /var/log/nginx/error.log
+```
+
+Hasil dari log pharazon
+![log](assets/17_logPharazon.png)
+Nah di sana terlihat benchmark tidak bisa terkoneksi dengan galadriel yang baru saja kita matikan
+
+Selanjutnya kita bisa menyalakan lagi nginx galadriel
+```bash
+service nginx start
+```
 
 ### Soal 18
 Kekuatan Palantir sangat vital. Untuk melindunginya, konfigurasikan replikasi database Master-Slave menggunakan MariaDB. Jadikan Palantir sebagai Master. Konfigurasikan Narvi sebagai Slave yang secara otomatis menyalin semua data dari Palantir. Buktikan replikasi berhasil dengan membuat tabel baru di Master dan memeriksanya di Slave.
@@ -340,3 +422,54 @@ Tujuan soal: Melindungi kedua load balancer (Elros dan Pharazon) dari serangan s
 Beban pada para worker semakin berat. Aktifkan Nginx Caching pada Pharazon untuk menyimpan salinan halaman PHP yang sering diakses. Gunakan curl pada domain nama Pharazon dari client untuk memeriksa response header. Buktikan bahwa permintaan kedua dan seterusnya untuk halaman yang sama mendapatkan status HIT dari cache dan tidak lagi membebani worker PHP.
 
 Tujuan soal: Mengurangi beban pada worker PHP dengan mengaktifkan caching di Pharazon. Kita harus membuktikan bahwa cache berfungsi dengan menggunakan curl untuk memeriksa response header dan mencari status HIT .
+
+Pertama kita bisa masuk ke pharazon dan tambahkan konfigurasi pada `nano /etc/nginx/nginx.conf`
+```bash
+#Di dalam blok http { ... } (di bawah limit_req_zone)
+# Mendefinisikan path cache
+# /var/cache/nginx: Lokasi penyimpanan
+# levels=1:2 : Struktur direktori
+# keys_zone=php_cache:10m : Nama zona 'php_cache' ukuran 10MB
+# max_size=1g : Ukuran cache di disk maksimal 1GB
+# inactive=60m : Hapus cache jika tidak diakses selama 60 menit
+
+proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=php_cache:10m max_size=1g inactive=60m;
+```
+
+Kemudian kita masuk ke `nano /etc/nginx/sites-available/default` dan terapkan cahce ke situs 
+```bash
+#Di dalam blok location / { ... }, tambahkan beberapa baris proxy_cache
+# Terapkan zona cache 'php_cache'
+proxy_cache php_cache;
+#Tentukan apa yang di-cache (kode 200) dan berapa lama
+proxy_cache_valid 200 1m; 
+# KUNCI UNTUK VERIFIKASI:
+# Tambahkan header kustom untuk melihat status HIT/MISS
+add_header X-Proxy-Cache $upstream_cache_status;
+```
+
+Kemudian kita bisa membuat direktori cahce jika belum ada 
+```bash
+mkdir -p /var/cache/nginx
+```
+
+Selanjutnya bisa melakukan restart pada nginx
+```bash
+nginx -t
+service nginx restart
+```
+
+Yang terakhir kita bisa melakuakn verifikasi dengan klien
+```bash
+#Verifikasi Cache 
+# masuk ke node clien jalankan permintaan pertama
+curl -I --user "noldor:silvan" http://pharazon.K33.com
+
+# jalankan permintaan kedua
+curl -I --user "noldor:silvan" http://pharazon.K33.com
+```
+
+Hasil setelah kedua verifikasi tersebut 
+![misshit](assets/20_statusHIT.png)
+
+
