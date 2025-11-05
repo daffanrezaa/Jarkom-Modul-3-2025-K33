@@ -1101,6 +1101,50 @@ Musuh mencoba menguji kekuatan pertahanan Númenor. Dari node client, luncurkan 
 - Serangan Penuh: -n 2000 -c 100 (2000 permintaan, 100 bersamaan). Pantau kondisi para worker dan periksa log Elros untuk melihat apakah ada worker yang kewalahan atau koneksi yang gagal.
 - Strategi Bertahan: Tambahkan weight dalam algoritma, kemudian catat apakah lebih baik atau tidak.
 
+Pertama kita bisa lakukan instalasi untuk melakukan benchmark
+```bash
+apt update && apt install apache2-utils -y
+```
+
+Selanjutnya  kita bisa melakukan serangan awal dan sambil melakukan itu kita bisa membuka terminal SSH baru, satu untuk masing-masing worker: Elendil, Isildur, dan Anarion. Di setiap terminal worker tersebut, jalankan `htop`. untuk melihat penggunaan CPU dan memori secara real-time.
+```bash
+# lakukan serangan awal 
+ab -n 100 -c 10 http://elros.K33.com/api/airing
+```
+Setelah selesai pemantauan kita bisa melakukan serangan penuh
+```bash
+#lakukan serangan penuh 
+ab -n 2000 -c 100 http://elros.K33.com/api/airing
+```
+
+Analisis saat tes berjalan, kembali ke terminal worker (Elendil, Isildur, dan Anarion) dan amati penggunaan CPU dan memori pada htop.
+
+Setelah benchmark selesai pindah ke elros untuk memeriksa apakah Elros mencatat adanya masalah.
+```bash
+cat/var/log/nginx/elros_error.log
+```
+
+Nah selanjutnya  kita bisa melakukan strategi bertahan dengan konfigurasi di nginx
+```bash
+# masuk ke erlos kemudian edit konfigurasi nginx dan temukan upstream kesatria_numenor
+nano /etc/nginx/sites-available/load_balancer
+
+# tambahkan weight
+upstream kesatria_numenor {
+    server 10.80.1.2:8001 weight=3; 
+    server 10.80.1.3:8002 weight=1;
+    server 10.80.1.4:8003 weight=1;
+}
+```
+
+setelah itu bisa restart nginx
+```bash
+nginx -t
+service nginx restart
+```
+
+Ulangin serangan penuh dan pantau hasilnya. 
+
 ### Soal 12
 Para Penguasa Peri (Galadriel, Celeborn, Oropher) membangun taman digital mereka menggunakan PHP. Instal nginx dan php8.4-fpm di setiap node worker PHP. Buat file index.php sederhana di /var/www/html masing-masing yang menampilkan nama hostname mereka. Buat agar akses web hanya bisa melalui domain nama, tidak bisa melalui ip.
 
@@ -1469,6 +1513,114 @@ Kekuatan Palantir sangat vital. Untuk melindunginya, konfigurasikan replikasi da
 Gelombang serangan dari Mordor semakin intens. Implementasikan rate limiting pada kedua Load Balancer (Elros dan Pharazon) menggunakan Nginx. Batasi agar satu alamat IP hanya bisa melakukan 10 permintaan per detik. Uji coba dengan menjalankan ab dari satu client dengan konkurensi tinggi (-c 50 atau lebih) dan periksa log Nginx untuk melihat pesan request yang ditolak atau ditunda karena rate limit.
 
 Tujuan soal: Melindungi kedua load balancer (Elros dan Pharazon) dari serangan sederhana. Kita harus menerapkan batas 10 permintaan per detik per IP dan mengujinya menggunakan ab dengan konkurensi tinggi.
+
+Pertama kita bisa zona rate limit di elros
+```bash
+nano /etc/nginx/nginx.conf
+```
+
+Kemudian kita bisa menambahkan pada blok http
+```bash
+http {
+    # ... (pengaturan http lainnya) ...
+
+    # 1. Definisi log format dari Soal 10
+    log_format upstream_custom '$remote_addr - $remote_user [$time_local] '
+                             '"$request" $status $body_bytes_sent '
+                             '"$http_referer" "$http_user_agent" '
+                             'upstream="$upstream_addr"';
+
+    # 2. Definisi zona limit dari Soal 19
+    limit_req_zone $binary_remote_addr zone=per_ip:10m rate=10r/s;
+
+    # ... (baris include sites-enabled) ...
+}
+```
+
+Selanjutnya kita tambahkan di site-available untuk limitnya `nano /etc/nginx/sites-available/load_balancer`
+```bash
+#Di dalam blok location / { ... }, tambahkan baris limit_req
+upstream kesatria_numenor {
+    # ... (konfigurasi weight Anda dari Soal 11) ...
+}
+
+server {
+    listen 80;
+    server_name elros.K33.com;
+
+    access_log /var/log/nginx/elros_upstream.log upstream_custom;
+    
+    # Pastikan 'warn' ada di sini
+    error_log /var/log/nginx/elros_error.log warn;
+
+    location / {
+        # ... (semua proxy_set_header Anda) ...
+
+        # Terapkan zona limit
+        limit_req zone=per_ip burst=20;
+    }
+}
+```
+
+Setelah itu bisa melakukan restart
+```bash
+nginx -t
+service nginx restart
+```
+
+Selanjutnya kita bisa menambahkan di Pharazon dan kita bisa masuk ke `nano /etc/nginx/nginx.conf`
+```bash
+#Tambahkan limit_req_zone di dalam blok http { ... }:
+http {
+    # ... (pengaturan http lainnya) ...
+
+    # Definisi zona limit dari Soal 19
+    limit_req_zone $binary_remote_addr zone=per_ip:10m rate=10r/s;
+
+    # ... (baris include sites-enabled) ...
+}
+```
+
+Kemudian masuk ke konfigurasi nginx pharazon `nano /etc/nginx/sites-available/default`
+```bash
+#Tambahkan error_log dan limit_req
+upstream Kesatria_Lorien {
+    # ... (konfigurasi upstream Anda dari Soal 16) ...
+}
+
+server {
+    listen 80;
+    server_name pharazon.K33.com;
+
+    # Tambahkan baris ini untuk mencatat 'warn'
+    error_log /var/log/nginx/pharazon_error.log warn;
+
+    location / {
+        # ... (semua proxy_set_header Anda dari Soal 16) ...
+
+        # Terapkan zona limit
+        limit_req zone=per_ip burst=20;
+    }
+}
+```
+
+Setelah itu kita bisa melakukan restart pada nginx
+
+Kemudian kita bisa melakukan verifikasi di klien 
+```bash
+# di elros uji lebih dari 10 request per detik
+ab -n 100 -c 50 http://elros.K33.com/api/airing/
+
+#uji di pahrazon
+ab -n 100 -c 50 -A noldor:silvan http://pharazon.K33.com/
+
+# masuk ke elros untuk memeriksa log
+cat /var/log/nginx/elros_error.log
+
+# ulagi ke pharazon untuk memeriksa log
+cat /var/log/nginx/pharazon_error.log
+```
+
 
 ### Soal 20
 Beban pada para worker semakin berat. Aktifkan Nginx Caching pada Pharazon untuk menyimpan salinan halaman PHP yang sering diakses. Gunakan curl pada domain nama Pharazon dari client untuk memeriksa response header. Buktikan bahwa permintaan kedua dan seterusnya untuk halaman yang sama mendapatkan status HIT dari cache dan tidak lagi membebani worker PHP.
