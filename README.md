@@ -1621,6 +1621,12 @@ cat /var/log/nginx/elros_error.log
 cat /var/log/nginx/pharazon_error.log
 ```
 
+Hasil di elros
+![elros](assets/19_elros.png)
+
+Hasil di Pharazon
+![pharazon](assets/19_pharazon.png)
+
 
 ### Soal 20
 Beban pada para worker semakin berat. Aktifkan Nginx Caching pada Pharazon untuk menyimpan salinan halaman PHP yang sering diakses. Gunakan curl pada domain nama Pharazon dari client untuk memeriksa response header. Buktikan bahwa permintaan kedua dan seterusnya untuk halaman yang sama mendapatkan status HIT dari cache dan tidak lagi membebani worker PHP.
