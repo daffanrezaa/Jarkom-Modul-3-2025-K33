@@ -61,13 +61,12 @@ server {
 EOF
 
 # aktifkan site dan hapus link default
-
+ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
 rm /etc/nginx/sites-enabled/default
 
-service nginx restart
-
 # jalankan migrasi dan seeding (hanya di elendil)
-php artisan migrate --seed
+php artisan migrate:fresh --seed
+service nginx restart
 
 # di isildur (worker 2 - port 8002)
 
@@ -125,7 +124,7 @@ sed -i "s/DB_PASSWORD=/DB_PASSWORD=JarkomSuram/" .env
 
 # konfigurasi nginx untuk port 8003
 cat <<EOF > /etc/nginx/sites-available/laravel
-server {
+server {33333
     listen 8003;
     server_name anarion.K33.com;
 

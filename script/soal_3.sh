@@ -89,3 +89,11 @@ dig google.com
 cat /etc/resolv.conf
 dig google.com
 # harusnya servernya bakal ke forward ke 10.80.5.2  
+
+
+cat <<EOF > /etc/resolv.conf
+nameserver 10.80.5.2
+nameserver 10.80.3.2
+nameserver 10.80.3.3
+nameserver 192.168.122.1
+EOF

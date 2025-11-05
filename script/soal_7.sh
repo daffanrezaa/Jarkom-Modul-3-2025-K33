@@ -13,9 +13,8 @@ git clone https://github.com/elshiraphine/laravel-simple-rest-api /var/www/larav
 cd /var/www/laravel
 
 # Instal dependensi Laravel
-
-composer install
 composer update 
+composer install --no-dev --optimize-autoloader
 
 # Siapkan file environment
 cp .env.example .env

@@ -53,6 +53,8 @@ service bind9 restart
 apt-get update
 apt-get install -y bind9
 
+ln -s /etc/init.d/named /etc/init.d/bind9
+
 # Konfigurasi BIND9 untuk menjadi "Slave"
 # Kita beri tahu Amdir untuk menyalin zone K33.com
 # dari Master (10.80.3.2)
