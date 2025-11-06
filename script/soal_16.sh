@@ -7,6 +7,7 @@ nano /etc/nginx/sites-available/default
 # hapus semua dan ganti dengan ini
 # Membuat upstream "Kesatria_Lorien" 
 # Berisi IP dan Port unik dari setiap worker
+cat << 'EOF' > /etc/nginx/sites-available/default
 upstream Kesatria_Lorien {
     server 10.80.2.2:8004;
     server 10.80.2.3:8005;
@@ -15,12 +16,9 @@ upstream Kesatria_Lorien {
 
 server {
     listen 80;
-
-    # Merespon domain pharazon.K33.com 
     server_name pharazon.K33.com;
 
     location / {
-        # Meneruskan request ke upstream 
         proxy_pass http://Kesatria_Lorien;
 
         # Meneruskan header Basic Auth ke worker 
@@ -28,11 +26,14 @@ server {
         proxy_pass_request_headers on;
 
         # Mengatur header IP Asli 
-        # $remote_addr adalah variabel Nginx untuk IP client
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
+EOF
+
+#di garadiel, celeborn, dan oropher
+# tambahkan `Kesatria_Lorien` di server name masing masing setelah itu restart seperti biasa
 
 #restart nginx
 nginx -t

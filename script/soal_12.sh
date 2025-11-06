@@ -5,11 +5,8 @@
 # nano /root/.bashrc
 
 # taruh di /root/.bashrc semua worker
-echo "--- Memulai instalasi Nginx dan PHP-FPM ---"
-apt-get update
-apt-get install nginx php8.4-fpm -y
+apt-get update && apt-get install nginx php8.4-fpm -y
 
-echo "--- Membuat file index.php ---"
 # Membuat direktori web
 mkdir -p /var/www/html
 
@@ -19,10 +16,6 @@ echo "<?php echo 'Selamat datang di taman Peri ' . gethostname(); ?>" > /var/www
 # Memberikan kepemilikan ke user web server (www-data)
 chown -R www-data:www-data /var/www/html
 
-echo "--- Instalasi selesai ---"
-
-#jalankan script 
-bash /root/.bashrc
 
 #Konfigurasi Nginx (Domain-Only, Port Unik, Socket PHP)
 # masuk ke galadriel dan edit 
@@ -53,7 +46,7 @@ server {
     index index.php;
 
     location / {
-        try_files $uri $uri/ =404;
+      
     }
 
     # meneruskan request .php ke socket PHP-FPM 
@@ -91,7 +84,7 @@ server {
     index index.php;
 
     location / {
-        try_files $uri $uri/ =404;
+      
     }
 
     # meneruskan request .php ke socket PHP-FPM 
@@ -128,7 +121,7 @@ server {
     index index.php;
 
     location / {
-        try_files $uri $uri/ =404;
+      
     }
 
     location ~ \.php$ {

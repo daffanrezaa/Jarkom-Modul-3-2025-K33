@@ -1,13 +1,25 @@
 # sudah langsung dari soal nomor 12
 #cukup verifikasi dengan klien
 # Tes Galadriel
-curl http://10.80.2.2:8004/index.php
+#jika tidak menggunakan port
+curl http://galadriel.K33.com/
+
+# jika menggunakan port
+curl http://galadriel.K33.com:8004/
 # Hasil: Selamat datang di taman Peri Galadriel
 
 # Tes Celeborn
-curl http://10.80.2.3:8005/index.php
+# jika tidak menggunakan port
+curl http://celeborn.K33.com/
+
+# jika menggunakan port
+curl http://celeborn.K33.com:8005/
 # Hasil: Selamat datang di taman Peri Celeborn
 
 # Tes Oropher
-curl http://10.80.2.4:8006/index.php
+# jika tidak menggunakan port
+curl http://oropher.K33.com/
+
+# jika menggunakan port
+curl http://oropher.K33.com:8006/
 # Hasil: Selamat datang di taman Peri Oropher

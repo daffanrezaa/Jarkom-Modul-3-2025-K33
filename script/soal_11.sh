@@ -14,7 +14,7 @@ ab -n 2000 -c 100 http://elros.K33.com/api/airing
 # kembali ke terminal worker (Elendil, Isildur, dan Anarion) dan amati penggunaan CPU dan memori pada htop.
 
 # setelah benchmark selesai pindah ke elros untuk memeriksa apakah Elros mencatat adanya masalah.
-cat /var/log/nginx/error.log
+cat /var/log/nginx/elros_error.log
 
 #strategi bertahan
 # masuk ke erlos kemudian edit konfigurasi nginx dan temukan upstream kesatria_numenor

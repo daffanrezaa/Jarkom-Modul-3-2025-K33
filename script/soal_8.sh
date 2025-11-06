@@ -105,9 +105,10 @@ server {
 }
 EOF
 
+rm /etc/nginx/sites-enabled/default
+
 # aktifkan site dan hapus link default
 ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
 
 php artisan key:generate
 service nginx restart
@@ -149,9 +150,11 @@ server {
 }
 EOF
 
+rm /etc/nginx/sites-enabled/default
+
 # aktifkan site dan hapus link default
 ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
+
 
 php artisan key:generate
 service nginx restart

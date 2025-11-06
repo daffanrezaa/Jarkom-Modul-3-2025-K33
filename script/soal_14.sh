@@ -14,15 +14,16 @@ auth_basic_user_file /etc/nginx/.htpasswd;
 # restart nginx
 nginx -t
 service nginx restart
+service php8.4-fpm restart 
 
 # ULANGI LANGKAH LANGKAH DI ATAS DI CELEBORN DAN OROPHER
 
 # verifikasi dari klien
 # Tes Gagal (Tanpa Otentikasi)
-curl http://10.80.2.2:8004
+curl http://galadriel.K33.com:8004/
 
 
 # Tes Berhasil (Dengan Otentikasi)
-curl --user "noldor:silvan" http://10.80.2.2:8004
+curl --user "noldor:silvan" http://galadriel.K33.com:8004/
 
 lynx http://galadriel.K33.com:8004
